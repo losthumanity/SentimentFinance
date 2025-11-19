@@ -20,29 +20,55 @@ wheels/
 *.egg
 MANIFEST
 
-# Environment variables
+# Virtual Env
+venv/
+.venv/
+
+# Env variables
 .env
+.env.local
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+*.sublime-*
 
-# Testing
+# Test
 .pytest_cache/
 .coverage
 htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
 
 # Docker
 .docker/
+*.sql.gz
+*.dump
 
 # AWS
 .aws/
+package.zip
+lambda-package/
 
 # Logs
 *.log
+logs/
 
 # OS
 .DS_Store
 Thumbs.db
+*.tmp
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+
+# Python compiled
+*.pyc
+__pycache__/

@@ -3,20 +3,28 @@ version: '3.8'
 services:
   db:
     image: mysql:8.0
+    container_name: sentiment_finance_db
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
       MYSQL_DATABASE: sentiment_finance
       MYSQL_USER: sentiment_app
       MYSQL_PASSWORD: sentiment_password
     ports:
-      - "3306:3306"
+      - "3308:3306"
     volumes:
       - db_data:/var/lib/mysql
+      - ./sql/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - sentiment_network
+
+networks:
+  sentiment_network:
+    driver: bridge
 
 volumes:
   db_data:

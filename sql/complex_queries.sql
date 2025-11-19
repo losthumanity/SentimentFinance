@@ -9,7 +9,7 @@
 -- ============================================================================
 
 -- Basic weekly sentiment report
-SELECT 
+SELECT
     c.name as company_name,
     c.sector,
     c.symbol,
@@ -24,12 +24,12 @@ SELECT
     SUM(CASE WHEN s.sentiment_label = 'negative' THEN 1 ELSE 0 END) as negative_count,
     SUM(CASE WHEN s.sentiment_label = 'neutral' THEN 1 ELSE 0 END) as neutral_count,
     -- Calculate sentiment momentum (positive - negative ratio)
-    (SUM(CASE WHEN s.sentiment_label = 'positive' THEN 1 ELSE 0 END) - 
+    (SUM(CASE WHEN s.sentiment_label = 'positive' THEN 1 ELSE 0 END) -
      SUM(CASE WHEN s.sentiment_label = 'negative' THEN 1 ELSE 0 END)) / COUNT(a.id) as sentiment_momentum
 FROM companies c
 JOIN articles a ON c.id = a.company_id
 JOIN sentiment_scores s ON a.id = s.article_id
-WHERE c.name = 'Apple Inc.' 
+WHERE c.name = 'Apple Inc.'
   AND a.published_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
 GROUP BY c.name, c.sector, c.symbol, DATE(a.published_at)
 ORDER BY DATE(a.published_at) DESC;
@@ -41,7 +41,7 @@ ORDER BY DATE(a.published_at) DESC;
 
 -- Find top-performing companies in technology sector with ranking
 WITH sector_sentiment AS (
-    SELECT 
+    SELECT
         c.id as company_id,
         c.name as company_name,
         c.symbol,
@@ -53,7 +53,7 @@ WITH sector_sentiment AS (
     FROM companies c
     JOIN articles a ON c.id = a.company_id
     JOIN sentiment_scores s ON a.id = s.article_id
-    WHERE c.sector = 'Technology' 
+    WHERE c.sector = 'Technology'
       AND a.published_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
     GROUP BY c.id, c.name, c.symbol
     HAVING total_articles >= 5  -- Only companies with substantial coverage
@@ -64,7 +64,7 @@ ranked_companies AS (
         NTILE(4) OVER (ORDER BY weighted_sentiment DESC) as quartile
     FROM sector_sentiment
 )
-SELECT 
+SELECT
     company_name,
     symbol,
     total_articles,
@@ -86,25 +86,25 @@ ORDER BY sentiment_rank;
 -- ============================================================================
 
 -- 7-day moving average of sentiment for a specific company
-SELECT 
+SELECT
     date,
     daily_sentiment,
     article_count,
     -- 7-day moving average
     AVG(daily_sentiment) OVER (
-        ORDER BY date 
+        ORDER BY date
         ROWS BETWEEN 6 PRECEDING AND CURRENT ROW
     ) as sentiment_7day_ma,
     -- Compare current sentiment to moving average
-    CASE 
+    CASE
         WHEN daily_sentiment > AVG(daily_sentiment) OVER (
-            ORDER BY date 
+            ORDER BY date
             ROWS BETWEEN 6 PRECEDING AND CURRENT ROW
         ) THEN 'Above Average'
         ELSE 'Below Average'
     END as trend_indicator
 FROM (
-    SELECT 
+    SELECT
         DATE(a.published_at) as date,
         AVG(s.sentiment_score) as daily_sentiment,
         COUNT(a.id) as article_count
@@ -122,7 +122,7 @@ ORDER BY date;
 -- Compares sentiment across different business sectors
 -- ============================================================================
 
-SELECT 
+SELECT
     sector_data.sector,
     sector_data.total_companies,
     sector_data.total_articles,
@@ -137,7 +137,7 @@ SELECT
     top_companies.best_company_sentiment
 FROM (
     -- Sector aggregation
-    SELECT 
+    SELECT
         c.sector,
         COUNT(DISTINCT c.id) as total_companies,
         COUNT(a.id) as total_articles,
@@ -159,7 +159,7 @@ CROSS JOIN (
 ) market_data
 LEFT JOIN (
     -- Best performing company per sector
-    SELECT 
+    SELECT
         c.sector,
         c.name as best_company,
         AVG(s.sentiment_score) as best_company_sentiment,
@@ -178,7 +178,7 @@ ORDER BY avg_sector_sentiment DESC;
 -- ============================================================================
 
 -- Compare sentiment scores across news sources
-SELECT 
+SELECT
     a.source,
     COUNT(a.id) as total_articles,
     AVG(s.sentiment_score) as avg_sentiment,
@@ -204,7 +204,7 @@ ORDER BY consistency_score DESC, avg_confidence DESC;
 
 -- Compare sentiment correlation between two companies
 WITH company_daily_sentiment AS (
-    SELECT 
+    SELECT
         c.name as company_name,
         DATE(a.published_at) as date,
         AVG(s.sentiment_score) as daily_sentiment
@@ -225,12 +225,12 @@ microsoft_sentiment AS (
     FROM company_daily_sentiment
     WHERE company_name = 'Microsoft Corporation'
 )
-SELECT 
+SELECT
     a.date,
     a.apple_sentiment,
     m.microsoft_sentiment,
     ABS(a.apple_sentiment - m.microsoft_sentiment) as sentiment_difference,
-    CASE 
+    CASE
         WHEN ABS(a.apple_sentiment - m.microsoft_sentiment) < 0.1 THEN 'Highly Correlated'
         WHEN ABS(a.apple_sentiment - m.microsoft_sentiment) < 0.3 THEN 'Moderately Correlated'
         ELSE 'Divergent'
@@ -246,7 +246,7 @@ ORDER BY a.date DESC;
 
 -- Daily market momentum with trend detection
 WITH daily_market_sentiment AS (
-    SELECT 
+    SELECT
         DATE(a.published_at) as date,
         COUNT(a.id) as total_articles,
         AVG(s.sentiment_score) as avg_sentiment,
@@ -258,19 +258,19 @@ WITH daily_market_sentiment AS (
     GROUP BY DATE(a.published_at)
 ),
 momentum_analysis AS (
-    SELECT 
+    SELECT
         *,
         positive_articles - negative_articles as sentiment_momentum,
         LAG(avg_sentiment) OVER (ORDER BY date) as prev_day_sentiment,
         avg_sentiment - LAG(avg_sentiment) OVER (ORDER BY date) as sentiment_change
     FROM daily_market_sentiment
 )
-SELECT 
+SELECT
     date,
     avg_sentiment,
     sentiment_momentum,
     sentiment_change,
-    CASE 
+    CASE
         WHEN sentiment_change > 0.05 THEN 'Strong Positive Shift'
         WHEN sentiment_change > 0.02 THEN 'Positive Shift'
         WHEN sentiment_change < -0.05 THEN 'Strong Negative Shift'
@@ -288,7 +288,7 @@ ORDER BY date DESC;
 -- ============================================================================
 
 -- Find companies performing better than their sector average
-SELECT 
+SELECT
     c.name as company_name,
     c.sector,
     c.symbol,
@@ -298,7 +298,7 @@ SELECT
     ROUND(
         company_stats.avg_sentiment - sector_stats.sector_avg_sentiment, 4
     ) as outperformance,
-    CASE 
+    CASE
         WHEN company_stats.avg_sentiment > sector_stats.sector_avg_sentiment + 0.1 THEN 'Strong Outperformer'
         WHEN company_stats.avg_sentiment > sector_stats.sector_avg_sentiment + 0.05 THEN 'Outperformer'
         WHEN company_stats.avg_sentiment < sector_stats.sector_avg_sentiment - 0.05 THEN 'Underperformer'
@@ -307,7 +307,7 @@ SELECT
 FROM companies c
 JOIN (
     -- Individual company sentiment stats
-    SELECT 
+    SELECT
         a.company_id,
         AVG(s.sentiment_score) as avg_sentiment,
         COUNT(a.id) as article_count
@@ -318,7 +318,7 @@ JOIN (
 ) company_stats ON c.id = company_stats.company_id
 JOIN (
     -- Sector average sentiment
-    SELECT 
+    SELECT
         c2.sector,
         AVG(s2.sentiment_score) as sector_avg_sentiment
     FROM companies c2
@@ -336,12 +336,12 @@ ORDER BY outperformance DESC;
 -- ============================================================================
 
 -- Sentiment patterns by day of week and time of day
-SELECT 
+SELECT
     DAYNAME(a.published_at) as day_of_week,
     HOUR(a.published_at) as hour_of_day,
     COUNT(a.id) as article_count,
     AVG(s.sentiment_score) as avg_sentiment,
-    CASE 
+    CASE
         WHEN HOUR(a.published_at) BETWEEN 9 AND 16 THEN 'Market Hours'
         WHEN HOUR(a.published_at) BETWEEN 17 AND 20 THEN 'After Hours'
         ELSE 'Off Hours'
@@ -351,7 +351,7 @@ JOIN sentiment_scores s ON a.id = s.article_id
 WHERE a.published_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
 GROUP BY DAYNAME(a.published_at), HOUR(a.published_at)
 HAVING article_count >= 5
-ORDER BY 
+ORDER BY
     FIELD(day_of_week, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
     hour_of_day;
 
@@ -362,11 +362,11 @@ ORDER BY
 
 -- Portfolio-level sentiment analysis with risk metrics
 WITH portfolio_companies AS (
-    SELECT * FROM companies 
+    SELECT * FROM companies
     WHERE name IN ('Apple Inc.', 'Microsoft Corporation', 'Tesla Inc.', 'NVIDIA Corporation')
 ),
 company_metrics AS (
-    SELECT 
+    SELECT
         pc.name as company_name,
         pc.sector,
         pc.symbol,
@@ -382,7 +382,7 @@ company_metrics AS (
     WHERE a.published_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
     GROUP BY pc.id, pc.name, pc.sector, pc.symbol
 )
-SELECT 
+SELECT
     -- Individual company metrics
     company_name,
     sector,
@@ -402,7 +402,7 @@ FROM company_metrics
 UNION ALL
 
 -- Portfolio summary
-SELECT 
+SELECT
     'PORTFOLIO TOTAL' as company_name,
     'Mixed' as sector,
     'PORTFOLIO' as symbol,

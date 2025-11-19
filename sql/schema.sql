@@ -4,8 +4,8 @@
 -- ============================================================================
 
 -- Create database (run this separately if needed)
--- CREATE DATABASE IF NOT EXISTS sentiment_finance 
--- CHARACTER SET utf8mb4 
+-- CREATE DATABASE IF NOT EXISTS sentiment_finance
+-- CHARACTER SET utf8mb4
 -- COLLATE utf8mb4_unicode_ci;
 
 -- USE sentiment_finance;
@@ -27,18 +27,18 @@ CREATE TABLE companies (
     description TEXT NULL,
     market_cap BIGINT NULL,
     employees INT NULL,
-    founded_year YEAR NULL,
+    founded_year SMALLINT NULL,
     headquarters VARCHAR(255) NULL,
     website VARCHAR(255) NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    
+
     -- Indexes for performance
     INDEX idx_sector (sector),
     INDEX idx_symbol (symbol),
     INDEX idx_name_sector (name, sector)
-) ENGINE=InnoDB 
-  CHARACTER SET utf8mb4 
+) ENGINE=InnoDB
+  CHARACTER SET utf8mb4
   COLLATE utf8mb4_unicode_ci
   COMMENT='Company master data with sector classification';
 
@@ -51,7 +51,7 @@ CREATE TABLE articles (
     title VARCHAR(500) NOT NULL,
     description TEXT NULL,
     content LONGTEXT NULL,
-    url VARCHAR(1000) NOT NULL UNIQUE,
+    url VARCHAR(500) NOT NULL UNIQUE,
     source VARCHAR(255) NOT NULL,
     author VARCHAR(255) NULL,
     published_at TIMESTAMP NOT NULL,
@@ -63,23 +63,22 @@ CREATE TABLE articles (
     reading_time_minutes INT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    
+
     -- Foreign key constraints
-    FOREIGN KEY (company_id) REFERENCES companies(id) 
-        ON DELETE CASCADE 
+    FOREIGN KEY (company_id) REFERENCES companies(id)
+        ON DELETE CASCADE
         ON UPDATE CASCADE,
-    
+
     -- Indexes for performance
     INDEX idx_published_at (published_at),
     INDEX idx_company_published (company_id, published_at),
     INDEX idx_source (source),
-    INDEX idx_url_hash (url(255)),
     INDEX idx_title_fulltext (title),
-    
+
     -- Full-text search indexes
     FULLTEXT INDEX ft_title_content (title, content)
-) ENGINE=InnoDB 
-  CHARACTER SET utf8mb4 
+) ENGINE=InnoDB
+  CHARACTER SET utf8mb4
   COLLATE utf8mb4_unicode_ci
   COMMENT='News articles with company associations and metadata';
 
@@ -99,28 +98,28 @@ CREATE TABLE sentiment_scores (
     keywords JSON NULL COMMENT 'Key phrases or words that influenced sentiment',
     processing_time_ms INT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
+
     -- Foreign key constraints
-    FOREIGN KEY (article_id) REFERENCES articles(id) 
-        ON DELETE CASCADE 
+    FOREIGN KEY (article_id) REFERENCES articles(id)
+        ON DELETE CASCADE
         ON UPDATE CASCADE,
-    
+
     -- Unique constraint - one sentiment score per article per method
     UNIQUE KEY unique_article_method (article_id, processing_method),
-    
+
     -- Indexes for performance
     INDEX idx_sentiment_score (sentiment_score),
     INDEX idx_sentiment_label (sentiment_label),
     INDEX idx_confidence (confidence),
     INDEX idx_article_sentiment (article_id, sentiment_score),
     INDEX idx_created_at (created_at),
-    
+
     -- Check constraints for data validation
     CHECK (sentiment_score >= -1.0000 AND sentiment_score <= 1.0000),
     CHECK (confidence >= 0.0000 AND confidence <= 1.0000),
     CHECK (subjectivity IS NULL OR (subjectivity >= 0.0000 AND subjectivity <= 1.0000))
-) ENGINE=InnoDB 
-  CHARACTER SET utf8mb4 
+) ENGINE=InnoDB
+  CHARACTER SET utf8mb4
   COLLATE utf8mb4_unicode_ci
   COMMENT='Sentiment analysis results with confidence metrics';
 
@@ -145,7 +144,7 @@ INSERT INTO companies (name, sector, symbol, description, market_cap, employees,
 
 -- View: Recent sentiment summary by company
 CREATE VIEW v_recent_company_sentiment AS
-SELECT 
+SELECT
     c.name AS company_name,
     c.sector,
     c.symbol,
@@ -159,7 +158,7 @@ SELECT
     SUM(CASE WHEN s.sentiment_label = 'neutral' THEN 1 ELSE 0 END) AS neutral_count,
     MAX(a.published_at) AS latest_article_date
 FROM companies c
-LEFT JOIN articles a ON c.id = a.company_id 
+LEFT JOIN articles a ON c.id = a.company_id
 LEFT JOIN sentiment_scores s ON a.id = s.article_id
 WHERE a.published_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
 GROUP BY c.id, c.name, c.sector, c.symbol
@@ -168,7 +167,7 @@ ORDER BY avg_sentiment DESC;
 
 -- View: Daily sentiment trends
 CREATE VIEW v_daily_sentiment_trends AS
-SELECT 
+SELECT
     DATE(a.published_at) AS date,
     c.sector,
     COUNT(a.id) AS total_articles,
@@ -195,7 +194,7 @@ CREATE PROCEDURE GetCompanySentimentReport(
     IN days_back INT DEFAULT 7
 )
 BEGIN
-    SELECT 
+    SELECT
         c.name AS company_name,
         c.sector,
         c.symbol,
@@ -223,11 +222,11 @@ CREATE PROCEDURE GetSectorAnalysis(
     IN days_back INT DEFAULT 30
 )
 BEGIN
-    SELECT 
+    SELECT
         c.name AS company_name,
         COUNT(a.id) AS article_count,
         AVG(s.sentiment_score) AS avg_sentiment,
-        CASE 
+        CASE
             WHEN AVG(s.sentiment_score) > 0.1 THEN 'Positive'
             WHEN AVG(s.sentiment_score) < -0.1 THEN 'Negative'
             ELSE 'Neutral'
@@ -271,7 +270,7 @@ CREATE INDEX idx_sentiment_article_score ON sentiment_scores(article_id, sentime
 -- ============================================================================
 
 -- Verify foreign key constraints are working
--- INSERT INTO articles (title, url, source, published_at, company_id) 
+-- INSERT INTO articles (title, url, source, published_at, company_id)
 -- VALUES ('Test', 'http://test.com', 'Test Source', NOW(), 999); -- Should fail
 
 -- Verify check constraints are working
@@ -283,11 +282,11 @@ CREATE INDEX idx_sentiment_article_score ON sentiment_scores(article_id, sentime
 -- ============================================================================
 
 -- Check table sizes
--- SELECT 
+-- SELECT
 --     table_name,
 --     ROUND(((data_length + index_length) / 1024 / 1024), 2) AS size_mb,
 --     table_rows
--- FROM information_schema.tables 
+-- FROM information_schema.tables
 -- WHERE table_schema = 'sentiment_finance'
 -- ORDER BY size_mb DESC;
 

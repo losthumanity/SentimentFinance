@@ -105,7 +105,7 @@ sam deploy \
 if [[ $? -eq 0 ]]; then
     echo
     echo -e "${GREEN}✅ Deployment successful!${NC}"
-    
+
     # Get outputs
     echo
     echo -e "${YELLOW}📋 Stack Outputs:${NC}"
@@ -114,21 +114,21 @@ if [[ $? -eq 0 ]]; then
         --region "$REGION" \
         --query 'Stacks[0].Outputs' \
         --output table
-    
+
     # Get Lambda function name for GitHub Actions
     LAMBDA_FUNCTION_NAME=$(aws cloudformation describe-stacks \
         --stack-name "$STACK_NAME" \
         --region "$REGION" \
         --query 'Stacks[0].Outputs[?OutputKey==`LambdaFunctionName`].OutputValue' \
         --output text)
-    
+
     echo
     echo -e "${GREEN}🎉 Deployment complete!${NC}"
     echo
     echo -e "${YELLOW}Next steps:${NC}"
     echo "1. Set up GitHub Actions secrets in your repository:"
     echo "   - AWS_ACCESS_KEY_ID"
-    echo "   - AWS_SECRET_ACCESS_KEY" 
+    echo "   - AWS_SECRET_ACCESS_KEY"
     echo "   - AWS_REGION=$REGION"
     echo "   - LAMBDA_FUNCTION_NAME=$LAMBDA_FUNCTION_NAME"
     echo
@@ -149,7 +149,7 @@ if [[ $? -eq 0 ]]; then
     echo "Database: sentiment_finance"
     echo "Username: admin"
     echo "Password: [the password you provided]"
-    
+
 else
     echo -e "${RED}❌ Deployment failed!${NC}"
     exit 1

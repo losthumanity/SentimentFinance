@@ -13,14 +13,14 @@ Parameters:
     Default: 'dev'
     AllowedValues: ['dev', 'staging', 'prod']
     Description: 'Environment name'
-  
+
   DBPassword:
     Type: String
     NoEcho: true
     MinLength: 8
     Description: 'Password for RDS MySQL database'
     Default: 'TempPassword123!'
-  
+
   NewsAPIKey:
     Type: String
     NoEcho: true
@@ -40,7 +40,7 @@ Resources:
   # ============================================================================
   # VPC and Networking for RDS
   # ============================================================================
-  
+
   VPC:
     Type: AWS::EC2::VPC
     Properties:
@@ -159,7 +159,7 @@ Resources:
   # ============================================================================
   # RDS MySQL Database
   # ============================================================================
-  
+
   DBSubnetGroup:
     Type: AWS::RDS::DBSubnetGroup
     Properties:
@@ -212,7 +212,7 @@ Resources:
   # ============================================================================
   # Lambda Function and Security
   # ============================================================================
-  
+
   LambdaSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -229,9 +229,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: !Sub '${AWS::StackName}-sentiment-pipeline'
-      CodeUri: ../src/
-      Handler: lambda_handler.lambda_handler
-      Runtime: python3.11
+      PackageType: Image
       Timeout: 900
       MemorySize: 1024
       VpcConfig:
@@ -270,11 +268,15 @@ Resources:
                 "source": "aws.events",
                 "detail-type": "Scheduled Event"
               }
+    Metadata:
+      DockerTag: v1
+      DockerContext: ..
+      Dockerfile: Dockerfile
 
   # ============================================================================
   # EventBridge Rule (Alternative to SAM Schedule)
   # ============================================================================
-  
+
   SentimentAnalysisScheduleRule:
     Type: AWS::Events::Rule
     Properties:
@@ -303,7 +305,7 @@ Resources:
   # ============================================================================
   # CloudWatch Log Group
   # ============================================================================
-  
+
   LambdaLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
@@ -313,7 +315,7 @@ Resources:
   # ============================================================================
   # Systems Manager Parameters for Configuration
   # ============================================================================
-  
+
   DBEndpointParameter:
     Type: AWS::SSM::Parameter
     Properties:

@@ -5,17 +5,17 @@
 param(
     [Parameter()]
     [string]$StackName = "sentiment-finance-pipeline",
-    
+
     [Parameter()]
     [string]$Region = "us-east-1",
-    
+
     [Parameter()]
     [string]$Environment = "dev"
 )
 
 # Colors for output
 $Green = "`e[32m"
-$Red = "`e[31m" 
+$Red = "`e[31m"
 $Yellow = "`e[33m"
 $Reset = "`e[0m"
 
@@ -110,7 +110,7 @@ sam deploy `
 if ($LASTEXITCODE -eq 0) {
     Write-Host
     Write-Host "${Green}✅ Deployment successful!${Reset}"
-    
+
     # Get outputs
     Write-Host
     Write-Host "${Yellow}📋 Stack Outputs:${Reset}"
@@ -119,14 +119,14 @@ if ($LASTEXITCODE -eq 0) {
         --region $Region `
         --query 'Stacks[0].Outputs' `
         --output table
-    
+
     # Get Lambda function name for GitHub Actions
     $LambdaFunctionName = (aws cloudformation describe-stacks `
         --stack-name $StackName `
         --region $Region `
         --query 'Stacks[0].Outputs[?OutputKey==`LambdaFunctionName`].OutputValue' `
         --output text)
-    
+
     Write-Host
     Write-Host "${Green}🎉 Deployment complete!${Reset}"
     Write-Host
@@ -154,7 +154,7 @@ if ($LASTEXITCODE -eq 0) {
     Write-Host "Database: sentiment_finance"
     Write-Host "Username: admin"
     Write-Host "Password: [the password you provided]"
-    
+
 } else {
     Write-Host "${Red}❌ Deployment failed!${Reset}"
     exit 1

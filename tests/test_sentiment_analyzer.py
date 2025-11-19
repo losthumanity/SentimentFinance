@@ -24,5 +24,7 @@ def test_sentiment_analyzer_empty():
     sa = SentimentAnalyzer()
     text = ""
     result = sa.analyze_sentiment(text)
-    assert result['sentiment_label'] == 'neutral'
-    assert result['sentiment_score'] == 0.0
+    # Empty text returns an empty result with basic keys
+    assert result['label'] == 'neutral'
+    assert result['score'] == 0.0
+    assert result['confidence'] == 0.0
